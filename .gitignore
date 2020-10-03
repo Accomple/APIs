@@ -14,5 +14,9 @@ venv/
 */.idea/
 .idea/
 
-
+# deployment
+gunicorn.service
+*/gunicorn.service
+APIs.nx
+*/APIs.nx
 
