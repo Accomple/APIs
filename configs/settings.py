@@ -158,6 +158,8 @@ REST_FRAMEWORK = {
     ]
 }
 
+AUTH_USER_MODEL = 'authentication.customUser'
+
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
