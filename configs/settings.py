@@ -85,12 +85,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'accomple',
-        'USER': 'Django',
+        'USER': 'django',
         'PASSWORD': 'FxNJ8c5h',
         'HOST': '35.192.163.83',
         'PORT': '3306',
     }
 }
+
+# localhost database
+DATABASES['default']['PASSWORD'] = 'django@mysql'
+DATABASES['default']['HOST'] = 'localhost'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
