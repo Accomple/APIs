@@ -7,12 +7,12 @@ import random
 
 class CustomUser(AbstractUser):
     username = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=16)
-    last_name = models.CharField(max_length=16)
+    first_name = models.CharField(max_length=16, null=True, blank=True)
+    last_name = models.CharField(max_length=16, null=True, blank=True)
     email_verification_token = models.CharField(max_length=40)
-    phone_number = models.CharField(max_length=13)
+    phone_number = models.CharField(max_length=13, null=True, blank=True)
     profile_pic = models.ImageField(null=True, blank=True, upload_to='profile_pics')
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(null=True, blank=True)
     password_reset_token = models.CharField(max_length=40)
     is_verified = models.BooleanField(default=False)
     is_owner = models.BooleanField(default=False)

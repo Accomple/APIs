@@ -109,6 +109,7 @@ class CodeVerification(APIView):
         context = {}
         context['email'] = request.user.username
         context['is_verified'] = request.user.is_verified
+        return Response(context, status=status.HTTP_200_OK)
 
     def post(self, request):
         if request.user.is_verified:
