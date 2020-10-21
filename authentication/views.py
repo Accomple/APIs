@@ -9,8 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 
-from .models import *
 from .serializers import *
+from .models import *
+
 
 import secrets
 
@@ -52,13 +53,6 @@ class Register(APIView):
         else:
             seeker = Seeker.objects.create(user=user)
             seeker.save()
-
-        if request.data['profile_pic']:
-            profile_pic = request.data['profile_pic']
-            ext = profile_pic.name.split('.')[-1]
-            profile_pic.name = secrets.token_urlsafe(30) + str(user.id) + '.' + ext
-            user.profile_pic = profile_pic
-            user.save()
 
         return Response(context, status=status.HTTP_201_CREATED)
 

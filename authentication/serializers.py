@@ -18,10 +18,20 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'phone_number',
             'is_owner',
             'date_of_birth',
-            'is_superuser'
+            'is_superuser',
+            'profile_pic'
+        ]
+        validators = [
+            UniqueTogetherValidator(queryset=CustomUser.objects.all(), fields=['username'])
         ]
 
     def create(self, validated_data):
+        profile_pic = None
+        if validated_data['profile_pic']:
+            profile_pic = validated_data['profile_pic']
+            ext = profile_pic.name.split('.')[-1]
+            profile_pic.name = secrets.token_urlsafe(30) + '.' + ext
+
         user = CustomUser.objects.create(
             username=validated_data['username'],
             email=validated_data['username'],
@@ -31,7 +41,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             password_reset_token=secrets.token_urlsafe(30),
             phone_number=validated_data['phone_number'],
             date_of_birth=validated_data['date_of_birth'],
-            is_owner=validated_data['is_owner']
+            is_owner=validated_data['is_owner'],
+            profile_pic=profile_pic
         )
         user.set_password(validated_data['password'])
         user.save()
