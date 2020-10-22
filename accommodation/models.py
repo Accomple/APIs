@@ -38,6 +38,7 @@ class Room(models.Model):
     occupancy = models.IntegerField()
     display_pic = models.ImageField(null=True, blank=True, upload_to='display_pics')
     is_booked = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -71,7 +72,7 @@ class Booking(models.Model):
 
 class PropertyDeed(models.Model):
     owner = models.ForeignKey(Owner, on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room = models.OneToOneField(Room, on_delete=models.CASCADE)
     registration_no = models.CharField(max_length=32)
     issue_date = models.DateField()
     expiry_date = models.DateField(null=True, blank=True)

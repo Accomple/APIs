@@ -48,6 +48,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'gender_label',
             'occupancy',
             'is_booked',
+            'is_verified',
             'display_pic'
         ]
 
@@ -68,6 +69,7 @@ class RoomSerializer(serializers.ModelSerializer):
             gender_label=validated_data['gender_label'],
             occupancy=validated_data['occupancy'],
             is_booked=False,
+            is_verified=False,
             display_pic=display_pic
         )
         return room
@@ -84,7 +86,7 @@ class PropertyDeedSerializer(serializers.ModelSerializer):
             'expiry_date',
             'document'
         ]
-        validators = [UniqueTogetherValidator(queryset=PropertyDeed.objects.all(), fields=['registration_no'])]
+        validators = [UniqueTogetherValidator(queryset=PropertyDeed.objects.all(), fields=['registration_no', 'room'])]
 
     def create(self, validated_data):
         document = None
