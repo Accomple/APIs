@@ -50,6 +50,11 @@ class RoomRegistration(APIView):
 class RoomModification(APIView):
     permission_classes = [IsAuthenticated]
 
+    def put(self, request, id):
+        context = {}
+        post_data = request.data.copy()
+        return Response(context, status=status.HTTP_200_OK)
+
     def patch(self, request, id):
         context = {}
         post_data = request.data.copy()
@@ -83,3 +88,28 @@ class RoomDetail(APIView):
         context['building'] = serialized_building.data
         context['room'] = serialized_room.data
         return Response(context, status=status.HTTP_200_OK)
+
+
+class RoomList(APIView):
+
+    def get(self, request, filter=None):
+        print(filter)
+
+        if filter is None:
+            return Response(self.list_all(), status=status.HTTP_200_OK)
+        else:
+            return Response({}, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def list_all():
+        context = []
+        rooms = Room.objects.all()
+        for room in rooms:
+            serialized_room = RoomSerializer(room)
+            serialized_building = BuildingSerializer(room.building)
+            serialized_data = {
+                'room': serialized_room.data,
+                'building': serialized_building.data
+            }
+            context.append(serialized_data)
+        return context
