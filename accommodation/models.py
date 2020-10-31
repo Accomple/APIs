@@ -18,14 +18,6 @@ class Building(models.Model):
         return self.building_name
 
 
-class BuildingPerk(models.Model):
-    building = models.ManyToManyField(Building)
-    description = models.CharField(max_length=32)
-
-    def __str__(self):
-        return self.description
-
-
 class Room(models.Model):
     GENDER_LABELS = [('M', 'Male'), ('F', 'Female'), ('U', 'Unisex')]
 
@@ -44,9 +36,9 @@ class Room(models.Model):
         return self.title
 
 
-class RoomPerk(models.Model):
+class Perk(models.Model):
     room = models.ManyToManyField(Room)
-    description = models.CharField(max_length=32)
+    description = models.TextField()
 
     def __str__(self):
         return self.description

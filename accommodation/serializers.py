@@ -7,9 +7,12 @@ from .models import *
 
 
 class BuildingSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Building
         fields = [
+            'id',
             'building_name',
             'street',
             'city',
@@ -23,23 +26,26 @@ class BuildingSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         building = Building.objects.create(
-            building_name=validated_data['building_name'],
-            street=validated_data['street'],
-            city=validated_data['city'],
-            state=validated_data['state'],
-            zip_code=validated_data['zip_code'],
-            landmark=validated_data['landmark'],
-            latitude=validated_data['latitude'],
-            longitude=validated_data['longitude'],
-            in_time=validated_data['in_time']
+            building_name=validated_data.get('building_name'),
+            street=validated_data.get('street'),
+            city=validated_data.get('city'),
+            state=validated_data.get('state'),
+            zip_code=validated_data.get('zip_code'),
+            landmark=validated_data.get('landmark'),
+            latitude=validated_data.get('latitude'),
+            longitude=validated_data.get('longitude'),
+            in_time=validated_data.get('in_time')
         )
         return building
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Room
         fields = [
+            'id',
             'owner',
             'building',
             'title',
@@ -76,9 +82,12 @@ class RoomSerializer(serializers.ModelSerializer):
 
 
 class PropertyDeedSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = PropertyDeed
         fields = [
+            'id',
             'room',
             'owner',
             'registration_no',
@@ -105,3 +114,49 @@ class PropertyDeedSerializer(serializers.ModelSerializer):
             document=document
         )
         return property_deed
+
+
+class RoomPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomPhoto
+        read_only_fields = ['id', 'room', 'photo']
+
+
+class PerkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Perk
+        read_only_fields = ['id', 'room', 'description']
+
+
+def describe_room(query_set, many=False):
+    if many:
+        context = []
+        for room in query_set:
+            photos = RoomPhoto.objects.filter(room=room)
+            perks = Perk.objects.filter(room=room)
+            serialized_room = RoomSerializer(room)
+            serialized_building = BuildingSerializer(room.building)
+            serialized_photos = RoomPhotoSerializer(photos, many=True)
+            serialized_perks = PerkSerializer(perks, many=True)
+            serialized_data = {
+                'room': serialized_room.data,
+                'building': serialized_building.data,
+                'photos': serialized_photos.data,
+                'perks': serialized_perks.data
+            }
+            context.append(serialized_data)
+    else:
+        context = {}
+        room = query_set
+        photos = RoomPhoto.objects.filter(room=room)
+        perks = Perk.objects.filter(room=room)
+        serialized_room = RoomSerializer(room)
+        serialized_building = BuildingSerializer(room.building)
+        serialized_photos = RoomPhotoSerializer(photos, many=True)
+        serialized_perks = PerkSerializer(perks, many=True)
+        context['room'] = serialized_room.data
+        context['building'] = serialized_building.data
+        context['photos'] = serialized_photos.data
+        context['perks'] = serialized_perks.data
+
+    return context
