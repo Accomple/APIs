@@ -9,6 +9,8 @@ urlpatterns = [
     path('add-photo/<int:id>/', AddPhoto.as_view(), name='add_photo'),
     path('add-property-deed/<int:id>/', AddPropertyDeed.as_view(), name='add_property_deed'),
 
+    path('get-property-deed/<int:id>/', GetPropertyDeed.as_view(), name='get_property_deed'),
+
     path('room-detail/<int:id>/', RoomDetail.as_view(), name='room_detail'),
     path('filter/<str:filter>/', RoomList.as_view()),
     path('', RoomList.as_view(), name='room_list'),

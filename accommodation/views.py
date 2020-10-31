@@ -114,6 +114,17 @@ class AddPropertyDeed(APIView):
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
 
+class GetPropertyDeed(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        context = {}
+        property_deed = get_object_or_404(PropertyDeed, room__id=id)
+        serializer = PropertyDeedSerializer(property_deed)
+        context = serializer.data
+        return Response(context, status=status.HTTP_200_OK)
+
+
 class DeletePerk(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -95,7 +95,10 @@ class PropertyDeedSerializer(serializers.ModelSerializer):
             'expiry_date',
             'document'
         ]
-        validators = [UniqueTogetherValidator(queryset=PropertyDeed.objects.all(), fields=['registration_no', 'room'])]
+        validators = [
+            UniqueTogetherValidator(queryset=PropertyDeed.objects.all(), fields=['registration_no']),
+            UniqueTogetherValidator(queryset=PropertyDeed.objects.all(), fields=['room'])
+        ]
 
     def create(self, validated_data):
         document = None
