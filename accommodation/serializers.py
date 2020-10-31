@@ -119,13 +119,15 @@ class PropertyDeedSerializer(serializers.ModelSerializer):
 class RoomPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomPhoto
-        read_only_fields = ['id', 'room', 'photo']
+        read_only_fields = ['id', 'photo']
+        fields = ['id', 'photo']
 
 
 class PerkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Perk
-        read_only_fields = ['id', 'room', 'description']
+        read_only_fields = ['id', 'description']
+        fields = ['id', 'description']
 
 
 def describe_room(query_set, many=False):

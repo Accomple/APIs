@@ -45,6 +45,10 @@ class AddRoom(APIView):
         post_data['owner'] = owner.id
         post_data['building'] = building.id
 
+        if Room.objects.filter(room_no=post_data['room_no'],building_id=post_data['building']).exists():
+            context['detail'] = "serialization error (Room)"
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)
+
         room = RoomSerializer(data=post_data)
         if room.is_valid():
             room = room.save()
@@ -56,7 +60,7 @@ class AddRoom(APIView):
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AddDetails(APIView):
+class AddPerks(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
@@ -64,13 +68,14 @@ class AddDetails(APIView):
         post_data = request.data.copy()
 
         room = get_object_or_404(Room, id=id)
-        for perk in post_data['perks']:
-            Perk.objects.create(room=room, description=perk)
+        for description in post_data['perks']:
+            perk, created = Perk.objects.get_or_create(description=description)
+            perk.room.add(room)
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
 
-class AddPhotos(APIView):
+class AddPhoto(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
@@ -78,10 +83,10 @@ class AddPhotos(APIView):
         post_data = request.data.copy()
 
         room = get_object_or_404(Room, id=id)
-        for photo in post_data.get('photos'):
-            ext = photo.name.split('.')[-1]
-            photo.name = str(room.id) + '.' + secrets.token_urlsafe(30) + '.' + ext
-            RoomPhoto.objects.create(room=room, photo=photo)
+        photo = post_data.get('photo')
+        ext = photo.name.split('.')[-1]
+        photo.name = str(room.id) + '.' + secrets.token_urlsafe(30) + '.' + ext
+        RoomPhoto.objects.create(room=room, photo=photo)
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
