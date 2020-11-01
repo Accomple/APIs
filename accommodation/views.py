@@ -198,25 +198,26 @@ class RoomList(APIView):
             return Response(context, status=status.HTTP_200_OK)
         else:
             filters = filters.split("&")
-            query_set = Room.objects.all()
+            rooms = Room.objects.all()
 
             for filter in filters:
                 key = filter.split("=")[0]
                 value = filter.split("=")[-1]
                 if key == "city":
-                    query_set = query_set & Room.objects.filter(building__city=value)
+                    rooms = rooms & Room.objects.filter(building__city=value)
                 elif key == "state":
-                    query_set = query_set & Room.objects.filter(building__state=value)
+                    rooms = rooms & Room.objects.filter(building__state=value)
                 elif key == "search":
-                    query_set = query_set & (Room.objects.filter(building__building_name__contains=value) | Room.objects.filter(title__contains=value))
+                    rooms = rooms & (Room.objects.filter(building__building_name__contains=value) | Room.objects.filter(title__contains=value))
                 elif key == "occupancy":
-                    query_set = query_set & Room.objects.filter(occupancy=value)
+                    rooms = rooms & Room.objects.filter(occupancy=value)
                 elif key == "rent_lte":
-                    query_set = query_set & Room.objects.filter(rent__lte=value)
+                    rooms = rooms & Room.objects.filter(rent__lte=value)
                 elif key == "rent_gte":
-                    query_set = query_set & Room.objects.filter(rent__gte=value)
+                    rooms = rooms & Room.objects.filter(rent__gte=value)
                 else:
-                    return Response({}, status=status.HTTP_400_BAD_REQUEST)
+                    context['detail'] = "invalid filter format"
+                    return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
-            print(query_set)
-            return Response({}, status=status.HTTP_200_OK)
+            context = describe_room(query_set=rooms, many=True)
+            return Response(context, status=status.HTTP_200_OK)
