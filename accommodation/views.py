@@ -1,4 +1,5 @@
 import secrets
+import re
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -45,7 +46,7 @@ class AddRoom(APIView):
         post_data['owner'] = owner.id
         post_data['building'] = building.id
 
-        if Room.objects.filter(room_no=post_data['room_no'],building_id=post_data['building']).exists():
+        if Room.objects.filter(room_no=post_data['room_no'], building_id=post_data['building']).exists():
             context['detail'] = "serialization error (Room)"
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
@@ -128,9 +129,9 @@ class GetPropertyDeed(APIView):
 class DeletePerk(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self,request,id):
+    def delete(self, request, id):
         context = {}
-        perk = get_object_or_404(Perk,id=id)
+        perk = get_object_or_404(Perk, id=id)
         perk.delete()
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
@@ -188,12 +189,34 @@ class RoomDetail(APIView):
 
 class RoomList(APIView):
 
-    def get(self, request, filter=None):
+    def get(self, request, filters=None):
         context = {}
 
-        if filter is None:
+        if filters is None:
             rooms = Room.objects.all()
             context = describe_room(query_set=rooms, many=True)
             return Response(context, status=status.HTTP_200_OK)
         else:
+            filters = filters.split("&")
+            query_set = Room.objects.all()
+
+            for filter in filters:
+                key = filter.split("=")[0]
+                value = filter.split("=")[-1]
+                if key == "city":
+                    query_set = query_set & Room.objects.filter(building__city=value)
+                elif key == "state":
+                    query_set = query_set & Room.objects.filter(building__state=value)
+                elif key == "search":
+                    query_set = query_set & (Room.objects.filter(building__building_name__contains=value) | Room.objects.filter(title__contains=value))
+                elif key == "occupancy":
+                    query_set = query_set & Room.objects.filter(occupancy=value)
+                elif key == "rent_lte":
+                    query_set = query_set & Room.objects.filter(rent__lte=value)
+                elif key == "rent_gte":
+                    query_set = query_set & Room.objects.filter(rent__gte=value)
+                else:
+                    return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+            print(query_set)
             return Response({}, status=status.HTTP_200_OK)
