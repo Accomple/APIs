@@ -11,7 +11,11 @@ urlpatterns = [
 
     path('get-property-deed/<int:id>/', GetPropertyDeed.as_view(), name='get_property_deed'),
 
-    path('room-detail/<int:id>/', RoomDetail.as_view(), name='room_detail'),
-    path('<str:filters>/', RoomList.as_view()),
-    path('', RoomList.as_view(), name='room_list'),
+    path('book/<int:id>/', Book.as_view()),
+    path('unbook/<str:booking_no>/', Unbook.as_view()),
+
+    path('detail/<int:id>/', AccommodationDetail.as_view(), name='room_detail'),
+    path('room/<int:id>/', RoomDetail.as_view()),
+    path('<str:filters>/', AccommodationList.as_view()),
+    path('', AccommodationList.as_view(), name='room_list'),
 ]

@@ -1,5 +1,7 @@
+import random
 import secrets
 import re
+from datetime import datetime
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -14,6 +16,7 @@ from rest_framework import status
 
 from .serializers import *
 from .models import *
+from apis import responses
 
 
 class AddBuilding(APIView):
@@ -45,10 +48,7 @@ class AddRoom(APIView):
         building = get_object_or_404(Building, id=id)
         post_data['owner'] = owner.id
         post_data['building'] = building.id
-
-        if Room.objects.filter(room_no=post_data['room_no'], building_id=post_data['building']).exists():
-            context['detail'] = "serialization error (Room)"
-            return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        post_data['available'] = post_data['total']
 
         room = RoomSerializer(data=post_data)
         if room.is_valid():
@@ -68,10 +68,10 @@ class AddPerks(APIView):
         context = {}
         post_data = request.data.copy()
 
-        room = get_object_or_404(Room, id=id)
+        building = get_object_or_404(Building, id=id)
         for description in post_data['perks']:
             perk, created = Perk.objects.get_or_create(description=description)
-            perk.room.add(room)
+            perk.building.add(building)
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
@@ -83,11 +83,11 @@ class AddPhoto(APIView):
         context = {}
         post_data = request.data.copy()
 
-        room = get_object_or_404(Room, id=id)
+        building = get_object_or_404(Building, id=id)
         photo = post_data.get('photo')
         ext = photo.name.split('.')[-1]
-        photo.name = str(room.id) + '.' + secrets.token_urlsafe(30) + '.' + ext
-        RoomPhoto.objects.create(room=room, photo=photo)
+        photo.name = str(building.id) + '.' + secrets.token_urlsafe(30) + '.' + ext
+        BuildingPhoto.objects.create(building=building, photo=photo)
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
@@ -142,35 +142,67 @@ class DeletePhoto(APIView):
 
     def delete(self, request, id):
         context = {}
-        photo = get_object_or_404(RoomPhoto, id=id)
+        photo = get_object_or_404(BuildingPhoto, id=id)
         photo.delete()
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
 
+class Book(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        context = {}
+        room = get_object_or_404(Room, id=id)
+        seeker = get_object_or_404(Seeker, user=request.user)
+
+        if Booking.objects.filter(user=seeker).exists():
+            context['detail'] = "duplicate user booking"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
+        if room.available <= 0:
+            context['detail'] = "no rooms available"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
+        booking_no = ''.join(random.choice('0123456789') for _ in range(12))
+        if room.available > 0:
+            room.available -= 1
+            room.save()
+        else:
+            context['detail'] = "no rooms available"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
+        booking = Booking.objects.create(user=seeker, room=room, booking_no=booking_no, booking_date=datetime.now())
+        context = BookingSerializer(booking).data
+        return Response(context, status=status.HTTP_201_CREATED)
+
+
 class Unbook(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, id):
+    def get(self, request, booking_no):
         context = {}
-        post_data = request.data.copy
 
-        room = get_object_or_404(Room, id)
+        booking = get_object_or_404(Booking, booking_no=booking_no)
+        room = booking.room
         if request.user.is_owner:
             if room.owner.user == request.user:
-                room.is_booked = False
-                room.save()
+                booking.delete()
+                if room.available < room.total:
+                    room.available += 1
+                    room.save()
                 context['detail'] = "success"
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context['detail'] = "Invalid User"
                 return Response(context, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            booking = get_object_or_404(Booking, room=room)
             seeker = booking.user
             if seeker.user == request.user:
-                room.is_booked = False
-                room.save()
+                booking.delete()
+                if room.available < room.total:
+                    room.available += 1
+                    room.save()
                 context['detail'] = "success"
                 return Response(context, status=status.HTTP_200_OK)
             else:
@@ -183,41 +215,56 @@ class RoomDetail(APIView):
     def get(self, request, id):
         context = {}
         room = get_object_or_404(Room, id=id)
-        context = describe_room(query_set=room)
+        context = responses.room_detail(room)
         return Response(context, status=status.HTTP_200_OK)
 
 
-class RoomList(APIView):
+class AccommodationDetail(APIView):
+
+    def get(self, request, id):
+        context = {}
+        building = get_object_or_404(Building, id=id)
+        context = responses.accommodation_detail(building)
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class AccommodationList(APIView):
 
     def get(self, request, filters=None):
         context = {}
 
         if filters is None:
-            rooms = Room.objects.all()
-            context = describe_room(query_set=rooms, many=True)
+            accommodations = Building.objects.all()
+            context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)
         else:
             filters = filters.split("&")
-            rooms = Room.objects.all()
+            accommodations = Building.objects.all()
 
             for filter in filters:
                 key = filter.split("=")[0]
                 value = filter.split("=")[-1]
                 if key == "city":
-                    rooms = rooms & Room.objects.filter(building__city=value)
+                    accommodations = accommodations & Building.objects.filter(city=value)
                 elif key == "state":
-                    rooms = rooms & Room.objects.filter(building__state=value)
+                    accommodations = accommodations & Building.objects.filter(state=value)
                 elif key == "search":
-                    rooms = rooms & (Room.objects.filter(building__building_name__contains=value) | Room.objects.filter(title__contains=value))
+                    rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(title__contains=value)
+                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms))
                 elif key == "occupancy":
-                    rooms = rooms & Room.objects.filter(occupancy=value)
+                    rooms = Room.objects.filter(occupancy=value)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
                 elif key == "rent_lte":
-                    rooms = rooms & Room.objects.filter(rent__lte=value)
+                    rooms = Room.objects.filter(rent__lte=value)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
                 elif key == "rent_gte":
-                    rooms = rooms & Room.objects.filter(rent__gte=value)
+                    rooms = Room.objects.filter(rent__gte=value)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
+                elif key == "gender_label":
+                    accommodations = accommodations & Building.objects.filter(gender_label=value)
                 else:
                     context['detail'] = "invalid filter format"
                     return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
-            context = describe_room(query_set=rooms, many=True)
+            context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)

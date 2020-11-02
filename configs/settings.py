@@ -85,7 +85,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'accomple',
-        'USER': 'django',
+        'USER': 'Django',
         'PASSWORD': 'FxNJ8c5h',
         'HOST': '35.192.163.83',
         'PORT': '3306',
@@ -93,6 +93,7 @@ DATABASES = {
 }
 
 # localhost database
+DATABASES['default']['USER'] = 'django'
 DATABASES['default']['PASSWORD'] = 'django@mysql'
 DATABASES['default']['HOST'] = 'localhost'
 

@@ -15,25 +15,37 @@ class BuildingSerializer(serializers.ModelSerializer):
             'id',
             'building_name',
             'street',
+            'area',
             'city',
             'state',
             'zip_code',
             'landmark',
             'latitude',
             'longitude',
+            'gender_label',
+            'display_pic',
             'in_time'
         ]
 
     def create(self, validated_data):
+        display_pic = None
+        if validated_data['display_pic']:
+            display_pic = validated_data['display_pic']
+            ext = display_pic.name.split('.')[-1]
+            display_pic.name = secrets.token_urlsafe(30) + '.' + ext
+
         building = Building.objects.create(
             building_name=validated_data.get('building_name'),
             street=validated_data.get('street'),
+            area=validated_data.get('area'),
             city=validated_data.get('city'),
             state=validated_data.get('state'),
             zip_code=validated_data.get('zip_code'),
             landmark=validated_data.get('landmark'),
             latitude=validated_data.get('latitude'),
             longitude=validated_data.get('longitude'),
+            gender_label=validated_data.get('gender_label'),
+            display_pic=display_pic,
             in_time=validated_data.get('in_time')
         )
         return building
@@ -48,35 +60,27 @@ class RoomSerializer(serializers.ModelSerializer):
             'id',
             'owner',
             'building',
+            'description',
             'title',
             'rent',
-            'room_no',
-            'gender_label',
+            'total',
+            'available',
             'occupancy',
-            'is_booked',
             'is_verified',
-            'display_pic'
         ]
 
     def create(self, validated_data):
-        display_pic = None
-        if validated_data['display_pic']:
-            display_pic = validated_data['display_pic']
-            ext = display_pic.name.split('.')[-1]
-            display_pic.name = secrets.token_urlsafe(30) + '.' + ext
 
         room = Room.objects.create(
             owner=validated_data['owner'],
             building=validated_data['building'],
-
             title=validated_data['title'],
             rent=validated_data['rent'],
-            room_no=validated_data['room_no'],
-            gender_label=validated_data['gender_label'],
+            total=validated_data['total'],
+            description=validated_data['description'],
+            available=validated_data['available'],
             occupancy=validated_data['occupancy'],
-            is_booked=False,
             is_verified=False,
-            display_pic=display_pic
         )
         return room
 
@@ -119,11 +123,11 @@ class PropertyDeedSerializer(serializers.ModelSerializer):
         return property_deed
 
 
-class RoomPhotoSerializer(serializers.ModelSerializer):
+class BuildingPhotoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RoomPhoto
-        read_only_fields = ['id', 'photo']
-        fields = ['id', 'photo']
+        model = BuildingPhoto
+        read_only_fields = ['id', 'caption', 'photo']
+        fields = ['id', 'caption', 'photo']
 
 
 class PerkSerializer(serializers.ModelSerializer):
@@ -133,15 +137,23 @@ class PerkSerializer(serializers.ModelSerializer):
         fields = ['id', 'description']
 
 
+class BookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        read_only_fields = ['booking_no', 'room', 'user', 'booking_date']
+        fields = ['booking_no', 'room', 'user', 'booking_date']
+
+
+
 def describe_room(query_set, many=False):
     if many:
         context = []
         for room in query_set:
-            photos = RoomPhoto.objects.filter(room=room)
+            photos = BuildingPhoto.objects.filter(room=room)
             perks = Perk.objects.filter(room=room)
             serialized_room = RoomSerializer(room)
             serialized_building = BuildingSerializer(room.building)
-            serialized_photos = RoomPhotoSerializer(photos, many=True)
+            serialized_photos = BuildingPhotoSerializer(photos, many=True)
             serialized_perks = PerkSerializer(perks, many=True)
             serialized_data = {
                 'room': serialized_room.data,
@@ -153,11 +165,11 @@ def describe_room(query_set, many=False):
     else:
         context = {}
         room = query_set
-        photos = RoomPhoto.objects.filter(room=room)
+        photos = BuildingPhoto.objects.filter(room=room)
         perks = Perk.objects.filter(room=room)
         serialized_room = RoomSerializer(room)
         serialized_building = BuildingSerializer(room.building)
-        serialized_photos = RoomPhotoSerializer(photos, many=True)
+        serialized_photos = BuildingPhotoSerializer(photos, many=True)
         serialized_perks = PerkSerializer(perks, many=True)
         context['room'] = serialized_room.data
         context['building'] = serialized_building.data
