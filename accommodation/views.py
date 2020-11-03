@@ -19,12 +19,14 @@ from .models import *
 from apis import responses
 
 
-class AddBuilding(APIView):
+class PostBuilding(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         context = {}
         post_data = request.data.copy()
+        owner = get_object_or_404(Owner, user=request.user)
+        post_data['owner'] = owner.id
 
         building = BuildingSerializer(data=post_data)
         if building.is_valid():
@@ -37,16 +39,45 @@ class AddBuilding(APIView):
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AddRoom(APIView):
+class GetBuilding(APIView):
+
+    def get(self, request, id):
+        context = {}
+        building = get_object_or_404(Building, id=id)
+        context = responses.accommodation_detail(building)
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class DeleteBuilding(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        context = {}
+        building = get_object_or_404(Building, id=id)
+        owner = building.owner
+        if owner.user == request.user:
+            building.delete()
+            context['detail'] = "success"
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
+
+
+class PostRoom(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
         context = {}
         post_data = request.data.copy()
 
-        owner = get_object_or_404(Owner, user=request.user)
         building = get_object_or_404(Building, id=id)
-        post_data['owner'] = owner.id
+        owner = building.owner
+        if owner.user != request.user:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
         post_data['building'] = building.id
         post_data['available'] = post_data['total']
 
@@ -61,7 +92,16 @@ class AddRoom(APIView):
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AddPerks(APIView):
+class GetRoom(APIView):
+
+    def get(self, request, id):
+        context = {}
+        room = get_object_or_404(Room, id=id)
+        context = responses.room_detail(room)
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class PostPerkList(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
@@ -72,6 +112,17 @@ class AddPerks(APIView):
         for description in post_data['perks']:
             perk, created = Perk.objects.get_or_create(description=description)
             perk.building.add(building)
+        context['detail'] = "success"
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class DeletePerk(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        context = {}
+        perk = get_object_or_404(Perk, id=id)
+        perk.delete()
         context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
@@ -92,6 +143,17 @@ class AddPhoto(APIView):
         return Response(context, status=status.HTTP_200_OK)
 
 
+class DeletePhoto(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        context = {}
+        photo = get_object_or_404(BuildingPhoto, id=id)
+        photo.delete()
+        context['detail'] = "success"
+        return Response(context, status=status.HTTP_200_OK)
+
+
 class AddPropertyDeed(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -100,7 +162,7 @@ class AddPropertyDeed(APIView):
         post_data = request.data.copy()
 
         room = get_object_or_404(Room, id=id)
-        owner = room.owner
+        owner = room.building.owner
         post_data['room'] = room.id
         post_data['owner'] = owner.id
 
@@ -123,28 +185,6 @@ class GetPropertyDeed(APIView):
         property_deed = get_object_or_404(PropertyDeed, room__id=id)
         serializer = PropertyDeedSerializer(property_deed)
         context = serializer.data
-        return Response(context, status=status.HTTP_200_OK)
-
-
-class DeletePerk(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, id):
-        context = {}
-        perk = get_object_or_404(Perk, id=id)
-        perk.delete()
-        context['detail'] = "success"
-        return Response(context, status=status.HTTP_200_OK)
-
-
-class DeletePhoto(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, id):
-        context = {}
-        photo = get_object_or_404(BuildingPhoto, id=id)
-        photo.delete()
-        context['detail'] = "success"
         return Response(context, status=status.HTTP_200_OK)
 
 
@@ -185,8 +225,9 @@ class Unbook(APIView):
 
         booking = get_object_or_404(Booking, booking_no=booking_no)
         room = booking.room
+        owner = room.building.owner
         if request.user.is_owner:
-            if room.owner.user == request.user:
+            if owner.user == request.user:
                 booking.delete()
                 if room.available < room.total:
                     room.available += 1
@@ -194,7 +235,7 @@ class Unbook(APIView):
                 context['detail'] = "success"
                 return Response(context, status=status.HTTP_200_OK)
             else:
-                context['detail'] = "Invalid User"
+                context['detail'] = "invalid user"
                 return Response(context, status=status.HTTP_401_UNAUTHORIZED)
         else:
             seeker = booking.user
@@ -208,24 +249,6 @@ class Unbook(APIView):
             else:
                 context['detail'] = "Invalid User"
                 return Response(context, status=status.HTTP_401_UNAUTHORIZED)
-
-
-class RoomDetail(APIView):
-
-    def get(self, request, id):
-        context = {}
-        room = get_object_or_404(Room, id=id)
-        context = responses.room_detail(room)
-        return Response(context, status=status.HTTP_200_OK)
-
-
-class AccommodationDetail(APIView):
-
-    def get(self, request, id):
-        context = {}
-        building = get_object_or_404(Building, id=id)
-        context = responses.accommodation_detail(building)
-        return Response(context, status=status.HTTP_200_OK)
 
 
 class AccommodationList(APIView):

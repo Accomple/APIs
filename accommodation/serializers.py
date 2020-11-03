@@ -13,6 +13,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         model = Building
         fields = [
             'id',
+            'owner',
             'building_name',
             'street',
             'area',
@@ -35,6 +36,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             display_pic.name = secrets.token_urlsafe(30) + '.' + ext
 
         building = Building.objects.create(
+            owner=validated_data['owner'],
             building_name=validated_data.get('building_name'),
             street=validated_data.get('street'),
             area=validated_data.get('area'),
@@ -58,7 +60,6 @@ class RoomSerializer(serializers.ModelSerializer):
         model = Room
         fields = [
             'id',
-            'owner',
             'building',
             'description',
             'title',
@@ -72,7 +73,6 @@ class RoomSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         room = Room.objects.create(
-            owner=validated_data['owner'],
             building=validated_data['building'],
             title=validated_data['title'],
             rent=validated_data['rent'],

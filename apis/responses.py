@@ -8,9 +8,11 @@ def accommodation_list(accommodations):
     context = []
     for accommodation in accommodations:
         rooms = Room.objects.filter(building=accommodation, is_verified=True).order_by('rent')
+        perks = Perk.objects.filter(building=accommodation)
         if rooms.exists():
             serialized_accommodation = BuildingSerializer(accommodation).data
             serialized_accommodation['starting_rent'] = rooms[0].rent
+            serialized_accommodation['perks'] = PerkSerializer(perks, many=True).data
             context.append(serialized_accommodation)
     return context
 
@@ -18,9 +20,11 @@ def accommodation_list(accommodations):
 def accommodation_detail(accommodation):
     context = BuildingSerializer(accommodation).data
     rooms = Room.objects.filter(building=accommodation, is_verified=True)
+    perks = Perk.objects.filter(building=accommodation)
     photos = BuildingPhoto.objects.filter(building=accommodation)
     context['rooms'] = RoomSerializer(rooms, many=True).data
     context['photos'] = BuildingPhotoSerializer(photos, many=True).data
+    context['perks'] = PerkSerializer(perks, many=True).data
     return context
 
 

@@ -5,7 +5,7 @@ from authentication.models import Owner, Seeker
 
 class Building(models.Model):
     GENDER_LABELS = [('M', 'Male'), ('F', 'Female'), ('U', 'Unisex')]
-
+    owner = models.ForeignKey(Owner, on_delete=models.CASCADE)
     building_name = models.CharField(max_length=32)
     street = models.CharField(max_length=32)
     area = models.CharField(max_length=32)
@@ -25,7 +25,6 @@ class Building(models.Model):
 
 class Room(models.Model):
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
-    owner = models.ForeignKey(Owner, on_delete=models.CASCADE)
     title = models.CharField(max_length=32)
     description = models.TextField()
     rent = models.FloatField(null=False)
