@@ -1,5 +1,5 @@
-from accommodation.models import *
-from accommodation.serializers import *
+from accommodations.models import *
+from accommodations.serializers import *
 from authentication.models import *
 from authentication.serializers import *
 

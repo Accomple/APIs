@@ -19,7 +19,7 @@ from .models import *
 from apis import responses
 
 
-class PostBuilding(APIView):
+class AddBuilding(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -51,7 +51,7 @@ class GetBuilding(APIView):
 class DeleteBuilding(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, id):
+    def delete(self, request, id):
         context = {}
         building = get_object_or_404(Building, id=id)
         owner = building.owner
@@ -64,8 +64,7 @@ class DeleteBuilding(APIView):
             return Response(context, status=status.HTTP_409_CONFLICT)
 
 
-
-class PostRoom(APIView):
+class AddRoom(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
@@ -101,7 +100,7 @@ class GetRoom(APIView):
         return Response(context, status=status.HTTP_200_OK)
 
 
-class PostPerkList(APIView):
+class AddPerks(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
@@ -188,10 +187,18 @@ class GetPropertyDeed(APIView):
         return Response(context, status=status.HTTP_200_OK)
 
 
-class Book(APIView):
+class DeletePropertyDeed(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id):
+        context = {}
+
+
+
+class AddBooking(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
         context = {}
         room = get_object_or_404(Room, id=id)
         seeker = get_object_or_404(Seeker, user=request.user)
@@ -217,10 +224,10 @@ class Book(APIView):
         return Response(context, status=status.HTTP_201_CREATED)
 
 
-class Unbook(APIView):
+class DeleteBooking(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, booking_no):
+    def delete(self, request, booking_no):
         context = {}
 
         booking = get_object_or_404(Booking, booking_no=booking_no)
