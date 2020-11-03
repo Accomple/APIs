@@ -1,7 +1,7 @@
 # APIs
 ## [Site Admin](http://api.accomple.sockets.live/admin/)
 ### superuser(s):
->username: HeptaDecane   
+>username: heptadecane@gmail.com   
 >password: c17h36
 
 ## Cloud Database: MySQL
