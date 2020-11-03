@@ -52,6 +52,20 @@ class BuildingSerializer(serializers.ModelSerializer):
         )
         return building
 
+    def update(self, instance, validated_data):
+        if validated_data.get('display_pic') != instance.display_pic:
+            display_pic = validated_data.get('display_pic')
+            ext = display_pic.name.split('.')[-1]
+            display_pic.name = secrets.token_urlsafe(30) + '.' + ext
+            validated_data['display_pic'] = display_pic
+            instance.display_pic = validated_data.get('display_pic', instance.display_pic)
+
+        instance.gender_label = validated_data.get('gender_label', instance.gender_label)
+        instance.landmark = validated_data.get('landmark', instance.landmark)
+        instance.in_time = validated_data.get('in_time', instance.in_time)
+        instance.save()
+        return instance
+
 
 class RoomSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
@@ -83,6 +97,14 @@ class RoomSerializer(serializers.ModelSerializer):
             is_verified=False,
         )
         return room
+
+    def update(self, instance, validated_data):
+        instance.title = validated_data.get('title', instance.title)
+        instance.rent = validated_data.get('rent', instance.rent)
+        instance.description = validated_data.get('description', instance.description)
+        instance.occupancy = validated_data.get('occupancy', instance.occupancy)
+        instance.save()
+        return instance
 
 
 class PropertyDeedSerializer(serializers.ModelSerializer):

@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 from django.shortcuts import render, get_object_or_404
+from django.http import QueryDict
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,7 +17,8 @@ from rest_framework import status
 
 from .serializers import *
 from .models import *
-from apis import responses
+from custom import responses
+from custom.procedures import *
 
 
 class AddBuilding(APIView):
@@ -46,6 +48,34 @@ class GetBuilding(APIView):
         building = get_object_or_404(Building, id=id)
         context = responses.accommodation_detail(building)
         return Response(context, status=status.HTTP_200_OK)
+
+
+class UpdateBuilding(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, id):
+        context = {}
+        post_data = request.data.copy()
+        building = get_object_or_404(Building, id=id)
+        owner = building.owner
+
+        if owner.user == request.user:
+            # must be done before merge() else file field will be filled with string from serializer
+            if post_data.get('display_pic') is None:
+                post_data['display_pic'] = building.display_pic
+
+            post_data = merge(serialized_data=BuildingSerializer(building).data, post_data=post_data)
+            building = BuildingSerializer(building, data=post_data)
+            if building.is_valid():
+                building.save()
+                context = building.data
+                return Response(context, status=status.HTTP_200_OK)
+            else:
+                context['detail'] = "serialization error (Building)"
+                return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)
 
 
 class DeleteBuilding(APIView):
@@ -100,6 +130,30 @@ class GetRoom(APIView):
         return Response(context, status=status.HTTP_200_OK)
 
 
+class UpdateRoom(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, id):
+        context = {}
+        post_data = request.data.copy()
+        room = get_object_or_404(Room, id=id)
+        owner = room.building.owner
+
+        if owner.user == request.user:
+            post_data = merge(serialized_data=RoomSerializer(room).data, post_data=post_data)
+            room = RoomSerializer(room, data=post_data)
+            if room.is_valid():
+                room.save()
+                context = room.data
+                return Response(context, status=status.HTTP_200_OK)
+            else:
+                context['detail'] = "serialization error (Room)"
+                return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
+
 class AddPerks(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -134,11 +188,22 @@ class AddPhoto(APIView):
         post_data = request.data.copy()
 
         building = get_object_or_404(Building, id=id)
+        caption = post_data.get('caption')
         photo = post_data.get('photo')
         ext = photo.name.split('.')[-1]
         photo.name = str(building.id) + '.' + secrets.token_urlsafe(30) + '.' + ext
-        BuildingPhoto.objects.create(building=building, photo=photo)
+        BuildingPhoto.objects.create(building=building, photo=photo, caption=caption)
         context['detail'] = "success"
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class GetPhoto(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        context = {}
+        photo = get_object_or_404(BuildingPhoto, id=id)
+        context = BuildingPhotoSerializer(photo).data
         return Response(context, status=status.HTTP_200_OK)
 
 
@@ -148,9 +213,14 @@ class DeletePhoto(APIView):
     def delete(self, request, id):
         context = {}
         photo = get_object_or_404(BuildingPhoto, id=id)
-        photo.delete()
-        context['detail'] = "success"
-        return Response(context, status=status.HTTP_200_OK)
+        owner = photo.building.owner
+        if owner.user == request.user:
+            photo.delete()
+            context['detail'] = "success"
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class AddPropertyDeed(APIView):
@@ -190,9 +260,18 @@ class GetPropertyDeed(APIView):
 class DeletePropertyDeed(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, id):
+    def delete(self, request, id):
         context = {}
 
+        property_deed = get_object_or_404(PropertyDeed, room__id=id)
+        owner = property_deed.owner
+        if owner.user == request.user:
+            property_deed.delete()
+            context['detail'] = "success"
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class AddBooking(APIView):
@@ -279,8 +358,11 @@ class AccommodationList(APIView):
                 elif key == "state":
                     accommodations = accommodations & Building.objects.filter(state=value)
                 elif key == "search":
-                    rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(title__contains=value)
-                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms))
+                    rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(
+                        title__contains=value)
+                    accommodations = accommodations & (
+                                Building.objects.filter(building_name__contains=value) | Building.objects.filter(
+                            room__in=rooms))
                 elif key == "occupancy":
                     rooms = Room.objects.filter(occupancy=value)
                     accommodations = accommodations & Building.objects.filter(room__in=rooms)
