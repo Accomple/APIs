@@ -264,6 +264,10 @@ class DeletePropertyDeed(APIView):
         context = {}
 
         property_deed = get_object_or_404(PropertyDeed, room__id=id)
+        if property_deed.room.is_verified:
+            context['detail'] = "verified property deed"
+            return Response(context, status=status.HTTP_409_CONFLICT)
+
         owner = property_deed.owner
         if owner.user == request.user:
             property_deed.delete()
@@ -380,3 +384,5 @@ class AccommodationList(APIView):
 
             context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)
+
+

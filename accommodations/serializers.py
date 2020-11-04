@@ -164,38 +164,3 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         read_only_fields = ['booking_no', 'room', 'user', 'booking_date']
         fields = ['booking_no', 'room', 'user', 'booking_date']
-
-
-
-def describe_room(query_set, many=False):
-    if many:
-        context = []
-        for room in query_set:
-            photos = BuildingPhoto.objects.filter(room=room)
-            perks = Perk.objects.filter(room=room)
-            serialized_room = RoomSerializer(room)
-            serialized_building = BuildingSerializer(room.building)
-            serialized_photos = BuildingPhotoSerializer(photos, many=True)
-            serialized_perks = PerkSerializer(perks, many=True)
-            serialized_data = {
-                'room': serialized_room.data,
-                'building': serialized_building.data,
-                'photos': serialized_photos.data,
-                'perks': serialized_perks.data
-            }
-            context.append(serialized_data)
-    else:
-        context = {}
-        room = query_set
-        photos = BuildingPhoto.objects.filter(room=room)
-        perks = Perk.objects.filter(room=room)
-        serialized_room = RoomSerializer(room)
-        serialized_building = BuildingSerializer(room.building)
-        serialized_photos = BuildingPhotoSerializer(photos, many=True)
-        serialized_perks = PerkSerializer(perks, many=True)
-        context['room'] = serialized_room.data
-        context['building'] = serialized_building.data
-        context['photos'] = serialized_photos.data
-        context['perks'] = serialized_perks.data
-
-    return context
