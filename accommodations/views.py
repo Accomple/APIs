@@ -352,8 +352,9 @@ class AccommodationList(APIView):
             return Response(context, status=status.HTTP_200_OK)
         else:
             filters = filters.split("&")
+            lat = None
+            long = None
             accommodations = Building.objects.all()
-
             for filter in filters:
                 key = filter.split("=")[0]
                 value = filter.split("=")[-1]
@@ -362,11 +363,8 @@ class AccommodationList(APIView):
                 elif key == "state":
                     accommodations = accommodations & Building.objects.filter(state=value)
                 elif key == "search":
-                    rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(
-                        title__contains=value)
-                    accommodations = accommodations & (
-                                Building.objects.filter(building_name__contains=value) | Building.objects.filter(
-                            room__in=rooms))
+                    rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(title__contains=value)
+                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms))
                 elif key == "occupancy":
                     rooms = Room.objects.filter(occupancy=value)
                     accommodations = accommodations & Building.objects.filter(room__in=rooms)
@@ -378,9 +376,21 @@ class AccommodationList(APIView):
                     accommodations = accommodations & Building.objects.filter(room__in=rooms)
                 elif key == "gender_label":
                     accommodations = accommodations & Building.objects.filter(gender_label=value)
+                elif key == "near":
+                    if not to_coordinates(value):
+                        context['detail'] = "invalid location"
+                        return Response(context, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        lat, long = to_coordinates(value)
                 else:
                     context['detail'] = "invalid filter format"
                     return Response(context, status=status.HTTP_400_BAD_REQUEST)
+
+            if (lat is not None) and (long is not None):
+                def distance(accommodation):
+                    return haversine_distance(accommodation.latitude, accommodation.longitude, lat, long)
+                accommodations = list(accommodations)
+                accommodations.sort(key=distance)
 
             context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)
