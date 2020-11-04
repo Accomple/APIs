@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'accommodations',
-    'authentication',
+    'accounts',
     'default',
 ]
 
@@ -158,12 +158,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',  # <-- And here
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ]
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     'rest_framework.renderers.JSONRenderer',
+    # ]
 }
 
-AUTH_USER_MODEL = 'authentication.customUser'
+AUTH_USER_MODEL = 'accounts.customUser'
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -1,7 +1,7 @@
 from accommodations.models import *
 from accommodations.serializers import *
-from authentication.models import *
-from authentication.serializers import *
+from accounts.models import *
+from accounts.serializers import *
 
 
 def accommodation_list(accommodations):

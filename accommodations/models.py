@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from authentication.models import Owner, Seeker
+from accounts.models import Owner, Seeker
 
 
 class Building(models.Model):
