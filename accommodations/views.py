@@ -347,24 +347,24 @@ class AccommodationList(APIView):
         context = {}
 
         if filters is None:
-            accommodations = Building.objects.all()
+            accommodations = Building.objects.all().distinct()
             context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)
         else:
             filters = filters.split("&")
             lat = None
             long = None
-            accommodations = Building.objects.all()
+            accommodations = Building.objects.all().distinct()
             for filter in filters:
                 key = filter.split("=")[0]
                 value = filter.split("=")[-1]
                 if key == "city":
-                    accommodations = accommodations & Building.objects.filter(city=value)
+                    accommodations = accommodations & Building.objects.filter(city=value).distinct()
                 elif key == "state":
-                    accommodations = accommodations & Building.objects.filter(state=value)
+                    accommodations = accommodations & Building.objects.filter(state=value).distinct()
                 elif key == "search":
                     rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(title__contains=value)
-                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms).distinct())
+                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value).distinct() | Building.objects.filter(room__in=rooms).distinct())
                 elif key == "occupancy":
                     rooms = Room.objects.filter(occupancy=value)
                     accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
@@ -375,7 +375,7 @@ class AccommodationList(APIView):
                     rooms = Room.objects.filter(rent__gte=value)
                     accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
                 elif key == "gender_label":
-                    accommodations = accommodations & Building.objects.filter(gender_label=value)
+                    accommodations = accommodations & Building.objects.filter(gender_label=value).distinct()
                 elif key == "near":
                     if not to_coordinates(value):
                         context['detail'] = "invalid location"
