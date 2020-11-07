@@ -364,16 +364,16 @@ class AccommodationList(APIView):
                     accommodations = accommodations & Building.objects.filter(state=value)
                 elif key == "search":
                     rooms = Room.objects.filter(description__contains=value) | Room.objects.filter(title__contains=value)
-                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms))
+                    accommodations = accommodations & (Building.objects.filter(building_name__contains=value) | Building.objects.filter(room__in=rooms).distinct())
                 elif key == "occupancy":
                     rooms = Room.objects.filter(occupancy=value)
-                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
                 elif key == "rent_lte":
                     rooms = Room.objects.filter(rent__lte=value)
-                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
                 elif key == "rent_gte":
                     rooms = Room.objects.filter(rent__gte=value)
-                    accommodations = accommodations & Building.objects.filter(room__in=rooms)
+                    accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
                 elif key == "gender_label":
                     accommodations = accommodations & Building.objects.filter(gender_label=value)
                 elif key == "near":
