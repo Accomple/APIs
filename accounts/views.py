@@ -72,6 +72,8 @@ class Login(APIView):
             context['token'] = token.key
             context['is_owner'] = user.is_owner
             context['is_superuser'] = user.is_superuser
+            context['is_verified'] = user.is_verified
+            context['name'] = user.first_name+" "+user.last_name
             login(request, user)
             return Response(context, status=status.HTTP_200_OK)
         else:
@@ -84,12 +86,12 @@ class Logout(APIView):
 
     def get(self, request):
         context = {}
-        # Delete Existing Token
-        token = Token.objects.get(user=request.user)
-        token.delete()
-        # Create New Token
-        token = Token.objects.create(user=request.user)
-        token.save()
+        # # Delete Existing Token
+        # token = Token.objects.get(user=request.user)
+        # token.delete()
+        # # Create New Token
+        # token = Token.objects.create(user=request.user)
+        # token.save()
         logout(request)
         context['detail'] = 'logged out'
         return Response(context, status=status.HTTP_200_OK)
