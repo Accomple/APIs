@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 from django.conf import settings
@@ -11,7 +11,8 @@ from rest_framework import status
 
 from .serializers import *
 from .models import *
-
+from accommodations.models import Building
+from custom import responses
 
 import secrets
 
@@ -158,3 +159,70 @@ class LinkVerification(APIView):
         else:
             return Response({'detail': "invalid email_verification_token"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+
+class ValidateToken(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        context = {}
+        context['details'] = "ok"
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class GetProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        context = {}
+        user = request.user
+        context = CustomUserSerializer(user).data
+        del context['password']
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class AddBookmark(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        context = {}
+        post_data = request.data.copy()
+        seeker = get_object_or_404(Seeker, user=request.user)
+        building = get_object_or_404(Building, id=id)
+        post_data['user'] = seeker.id
+        post_data['building'] = building.id
+        bookmark = BookmarkSerializer(data=post_data)
+        if bookmark.is_valid():
+            bookmark = bookmark.save()
+            serializer = BookmarkSerializer(bookmark)
+            context = serializer.data
+            return Response(context, status=status.HTTP_201_CREATED)
+        else:
+            context['detail'] = "serialization error (Building)"
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyBookmarks(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        context = {}
+        seeker = get_object_or_404(Seeker, user=request.user)
+        bookmarks = Bookmark.objects.filter(user=seeker)
+        context = responses.bookmark_list(bookmarks)
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class DeleteBookmark(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        context = {}
+        bookmark = get_object_or_404(Bookmark, id=id)
+        seeker = bookmark.user
+        if seeker.user == request.user:
+            bookmark.delete()
+            context['detail'] = "success"
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)

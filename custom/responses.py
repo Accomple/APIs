@@ -45,3 +45,12 @@ def room_detail(room):
             }
         )
     return context
+
+
+def bookmark_list(bookmarks):
+    context = BookmarkSerializer(bookmarks, many=True).data
+    for bookmark in context:
+        building_id = bookmark['building']
+        building = Building.objects.filter(id=building_id)
+        bookmark['building'] = accommodation_list(building)[0]
+    return context

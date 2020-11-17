@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from datetime import datetime
 import random
 
+# from accommodations.models import Building
 
 class CustomUser(AbstractUser):
     username = models.EmailField(unique=True)
@@ -57,3 +58,4 @@ class Seeker(models.Model):
 
     def __str__(self):
         return self.user.username
+

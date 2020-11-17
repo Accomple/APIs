@@ -164,3 +164,25 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         read_only_fields = ['booking_no', 'room', 'user', 'booking_date']
         fields = ['booking_no', 'room', 'user', 'booking_date']
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Bookmark
+        fields = [
+            'id',
+            'user',
+            'building'
+        ]
+        validators = [
+            UniqueTogetherValidator(queryset=Bookmark.objects.all(), fields=['user', 'building'])
+        ]
+
+    def create(self, validated_data):
+        bookmark = Bookmark.objects.create(
+            user=validated_data['user'],
+            building=validated_data['building']
+        )
+        return bookmark

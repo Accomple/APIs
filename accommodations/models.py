@@ -74,3 +74,11 @@ class PropertyDeed(models.Model):
 
     def __str__(self):
         return self.registration_no
+
+
+class Bookmark(models.Model):
+    user = models.ForeignKey(Seeker, on_delete=models.CASCADE)
+    building = models.ForeignKey(Building, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.user) + " " + str(self.building)
