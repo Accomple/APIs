@@ -61,7 +61,7 @@ class UpdateBuilding(APIView):
 
         if owner.user == request.user:
             # must be done before merge() else file field will be filled with string from serializer
-            if post_data.get('display_pic') is None:
+            if post_data.get('display_pic') is None or post_data.get('display_pic') == '':
                 post_data['display_pic'] = building.display_pic
 
             post_data = merge(serialized_data=BuildingSerializer(building).data, post_data=post_data)

@@ -13,6 +13,7 @@ from .serializers import *
 from .models import *
 from accommodations.models import Building
 from custom import responses
+from custom.procedures import *
 
 import secrets
 
@@ -226,3 +227,26 @@ class DeleteBookmark(APIView):
         else:
             context['detail'] = "invalid user"
             return Response(context, status=status.HTTP_409_CONFLICT)
+
+
+class UpdateProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        context = {}
+        post_data = request.data.copy()
+        user = request.user
+        if post_data.get('profile_pic') is None or post_data.get('profile_pic') == '':
+            print(user.profile_pic)
+            post_data['profile_pic'] = user.profile_pic
+
+        post_data = merge(serialized_data=CustomUserSerializer(user).data, post_data=post_data)
+        user = CustomUserSerializer(user, data=post_data)
+        print(user)
+        if user.is_valid():
+            user.save()
+            context = user.data
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "serialization error (User)"
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)

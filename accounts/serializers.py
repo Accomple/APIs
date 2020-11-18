@@ -49,3 +49,17 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+    def update(self, instance, validated_data):
+        if validated_data.get('profile_pic') != instance.profile_pic:
+            profile_pic = validated_data.get('profile_pic')
+            ext = profile_pic.name.split('.')[-1]
+            profile_pic.name = secrets.token_urlsafe(30) + '.' + ext
+            validated_data['profile_pic'] = profile_pic
+            instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
+
+        instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.save()
+        return instance
