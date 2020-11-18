@@ -277,3 +277,44 @@ class ActiveBooking(APIView):
         else:
             context['exists'] = False
             return Response(context, status=status.HTTP_200_OK)
+
+
+class UpdatePassword(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        context = {}
+        post_data = request.data.copy()
+        current_password = post_data.get('current_password')
+        new_password = post_data.get('new_password')
+
+        if request.user.check_password(current_password):
+            if len(new_password) < 8:
+                context['detail'] = "invalid new password (length<8)"
+                return Response(context, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                request.user.set_password(new_password)
+                request.user.save()
+                context['detail'] = "success"
+                return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid current password"
+            return Response(context, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class DeleteUser(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        context = {}
+        post_data = request.data.copy()
+        password = post_data.get('password')
+        user = request.user
+        if user.check_password(password):
+            logout(request)
+            user.delete()
+            context['detail'] = "success"
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid password"
+            return Response(context, status=status.HTTP_401_UNAUTHORIZED)
