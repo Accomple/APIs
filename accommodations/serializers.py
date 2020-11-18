@@ -160,10 +160,12 @@ class PerkSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Booking
-        read_only_fields = ['booking_no', 'room', 'user', 'booking_date']
-        fields = ['booking_no', 'room', 'user', 'booking_date']
+        read_only_fields = ['id', 'booking_no', 'room', 'user', 'booking_date']
+        fields = ['id', 'booking_no', 'room', 'user', 'booking_date']
 
 
 class BookmarkSerializer(serializers.ModelSerializer):

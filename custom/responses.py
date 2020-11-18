@@ -54,3 +54,20 @@ def bookmark_list(bookmarks):
         building = Building.objects.filter(id=building_id)
         bookmark['building'] = accommodation_list(building)[0]
     return context
+
+
+def booking_details(booking):
+    context = {}
+    room = booking.room
+    building = room.building
+    owner = building.owner.user
+    context['booking'] = BookingSerializer(booking).data
+    context['room'] = RoomSerializer(room).data
+    context['building'] = BuildingSerializer(building).data
+    context['owner'] = {
+        'email': owner.username,
+        'first_name': owner.first_name,
+        'last_name': owner.last_name,
+        'phone_number': owner.phone_number
+    }
+    return context

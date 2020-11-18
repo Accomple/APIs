@@ -237,12 +237,11 @@ class UpdateProfile(APIView):
         post_data = request.data.copy()
         user = request.user
         if post_data.get('profile_pic') is None or post_data.get('profile_pic') == '':
-            print(user.profile_pic)
             post_data['profile_pic'] = user.profile_pic
 
         post_data = merge(serialized_data=CustomUserSerializer(user).data, post_data=post_data)
         user = CustomUserSerializer(user, data=post_data)
-        print(user)
+
         if user.is_valid():
             user.save()
             context = user.data
@@ -250,3 +249,31 @@ class UpdateProfile(APIView):
         else:
             context['detail'] = "serialization error (User)"
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegisteredBuildings(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        context = {}
+        owner = get_object_or_404(Owner, user=request.user)
+        buildings = Building.objects.filter(owner=owner)
+        context = BuildingSerializer(buildings, many=True).data
+        return Response(context, status=status.HTTP_200_OK)
+
+
+class ActiveBooking(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        context = {}
+        seeker = get_object_or_404(Seeker, user=request.user)
+
+        if Booking.objects.filter(user=seeker).exists():
+            booking = get_object_or_404(Booking, user=seeker)
+            context = responses.booking_details(booking=booking)
+            context['exists'] = True
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['exists'] = False
+            return Response(context, status=status.HTTP_200_OK)
