@@ -376,6 +376,8 @@ class AccommodationList(APIView):
                     accommodations = accommodations & Building.objects.filter(room__in=rooms).distinct()
                 elif key == "gender_label":
                     accommodations = accommodations & Building.objects.filter(gender_label=value).distinct()
+                elif key == "zip_code":
+                    accommodations = accommodations & Building.objects.filter(zip_code=value).distinct()
                 elif key == "near":
                     if not to_coordinates(value):
                         context['detail'] = "invalid location"
@@ -394,5 +396,3 @@ class AccommodationList(APIView):
 
             context = responses.accommodation_list(accommodations)
             return Response(context, status=status.HTTP_200_OK)
-
-
