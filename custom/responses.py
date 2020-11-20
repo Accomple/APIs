@@ -17,9 +17,12 @@ def accommodation_list(accommodations):
     return context
 
 
-def accommodation_detail(accommodation):
+def accommodation_detail(accommodation, owner=False):
     context = BuildingSerializer(accommodation).data
-    rooms = Room.objects.filter(building=accommodation, is_verified=True)
+    if owner:
+        rooms = Room.objects.filter(building=accommodation)
+    else:
+        rooms = Room.objects.filter(building=accommodation, is_verified=True)
     perks = Perk.objects.filter(building=accommodation)
     photos = BuildingPhoto.objects.filter(building=accommodation)
     context['rooms'] = RoomSerializer(rooms, many=True).data

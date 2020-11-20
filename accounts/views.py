@@ -318,3 +318,18 @@ class DeleteUser(APIView):
         else:
             context['detail'] = "invalid password"
             return Response(context, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class GetBuilding(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        context = {}
+        building = get_object_or_404(Building, id=id)
+        owner = building.owner
+        if owner.user == request.user:
+            context = responses.accommodation_detail(accommodation=building, owner=True)
+            return Response(context, status=status.HTTP_200_OK)
+        else:
+            context['detail'] = "invalid user"
+            return Response(context, status=status.HTTP_409_CONFLICT)

@@ -17,5 +17,6 @@ urlpatterns = [
     path('buildings/get/user=me/', RegisteredBuildings.as_view(), name="registered_building"),
     path('booking/get/user=me/', ActiveBooking.as_view(), name="active_booking"),
     path('password/update/user=me/', UpdatePassword.as_view(), name="update_password"),
+    path('building/get/id=<int:id>/', GetBuilding.as_view(), name='get_building'),
     path('delete/user=me/', DeleteUser.as_view(), name="delete_user")
 ]
