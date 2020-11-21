@@ -47,6 +47,14 @@ class GetBuilding(APIView):
         context = {}
         building = get_object_or_404(Building, id=id)
         context = responses.accommodation_detail(building)
+        if 'Authorization' in request.headers:
+            if Seeker.objects.filter(user=request.user).exists():
+                seeker = Seeker.objects.get(user=request.user)
+                context['is_bookmarked'] = Bookmark.objects.filter(user=seeker, building=building).exists()
+            else:
+                context['is_bookmarked'] = False
+        else:
+            context['is_bookmarked'] = False
         return Response(context, status=status.HTTP_200_OK)
 
 
