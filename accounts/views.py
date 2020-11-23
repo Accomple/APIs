@@ -113,7 +113,7 @@ class CodeVerification(APIView):
         if request.user.is_verified:
             return Response({'detail': "verified account"}, status=status.HTTP_423_LOCKED)
 
-        if request.data['resend']:
+        if request.data.get('resend'):
             otp = OTP.objects.get(user=request.user)
             otp.generate()
             send_mail(
