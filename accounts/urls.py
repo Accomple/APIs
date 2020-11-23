@@ -12,6 +12,7 @@ urlpatterns = [
     path('get_profile/', GetProfile.as_view(), name='get_profile'),
     path('bookmark/add/building_id=<int:id>/', AddBookmark.as_view(), name='add_bookmark'),
     path('bookmarks/get/user=me/', MyBookmarks.as_view(), name='my_bookmarks'),
+    path('bookmark/delete/building_id=<int:id>/', RemoveBookmark.as_view(), name='remove_bookmark'),
     path('bookmark/delete/id=<int:id>/', DeleteBookmark.as_view(), name='delete_bookmark'),
     path('profile/update/user=me/', UpdateProfile.as_view(), name='update_profile'),
     path('buildings/get/user=me/', RegisteredBuildings.as_view(), name="registered_building"),

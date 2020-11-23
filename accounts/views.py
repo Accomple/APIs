@@ -229,6 +229,19 @@ class DeleteBookmark(APIView):
             return Response(context, status=status.HTTP_409_CONFLICT)
 
 
+class RemoveBookmark(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        context = {}
+        seeker = get_object_or_404(Seeker, user=request.user)
+        building = get_object_or_404(Building, id=id)
+        bookmark = get_object_or_404(Bookmark, user=seeker, building=building)
+        bookmark.delete()
+        context['detail'] = "success"
+        return Response(context, status=status.HTTP_200_OK)
+
+
 class UpdateProfile(APIView):
     permission_classes = [IsAuthenticated]
 
