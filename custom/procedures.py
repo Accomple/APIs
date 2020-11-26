@@ -1,4 +1,7 @@
 import math
+from threading import Thread
+from django.conf import settings
+from django.core.mail import send_mail
 
 
 def merge(serialized_data, post_data):
@@ -46,3 +49,36 @@ def to_coordinates(value):
         return lat, long
     else:
         return None
+
+
+class EmailThread(Thread):
+    def __init__(self, email_to, subject, body):
+        self.email_to = email_to
+        self.subject = subject
+        self.body = body
+        Thread.__init__(self)
+
+    def run(self):
+        send_mail(
+            self.subject,
+            self.body,
+            settings.EMAIL_HOST_USER,
+            [self.email_to, settings.EMAIL_HOST_USER],
+            fail_silently=True
+        )
+
+
+def booking_added_mail(booking_no, building_name, room_title, user):
+    body = "Hey!\nYou have a new booking #"+str(booking_no)
+    body += "\nfor "+str(room_title)+" in "+str(building_name)+", by "+user
+    return body
+
+
+def booking_cancelled_mail(booking_no, building_name, room_title, owner=True):
+    body = "Hello!\nYour Booking #"+str(booking_no)
+    body += "\nfor "+str(room_title)+" in "+str(building_name)
+    if owner:
+        body += "\nhas been cancelled by the Owner"
+    else:
+        body += "\nhas been cancelled by the User"
+    return body

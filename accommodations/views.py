@@ -292,6 +292,7 @@ class AddBooking(APIView):
     def post(self, request, id):
         context = {}
         room = get_object_or_404(Room, id=id)
+        building = room.building
         seeker = get_object_or_404(Seeker, user=request.user)
 
         if Booking.objects.filter(user=seeker).exists():
@@ -312,6 +313,14 @@ class AddBooking(APIView):
 
         booking = Booking.objects.create(user=seeker, room=room, booking_no=booking_no, booking_date=datetime.now())
         context = BookingSerializer(booking).data
+        mail = booking_added_mail(
+            booking_no=booking_no,
+            building_name=building.building_name,
+            room_title=room.title,
+            user=seeker.user.first_name
+        )
+
+        EmailThread(email_to=seeker.user.username, subject="New Booking", body=mail).start()
         return Response(context, status=status.HTTP_201_CREATED)
 
 
@@ -322,7 +331,9 @@ class DeleteBooking(APIView):
         context = {}
 
         booking = get_object_or_404(Booking, booking_no=booking_no)
+        seeker = booking.user
         room = booking.room
+        building = room.building
         owner = room.building.owner
         if request.user.is_owner:
             if owner.user == request.user:
@@ -331,6 +342,13 @@ class DeleteBooking(APIView):
                     room.available += 1
                     room.save()
                 context['detail'] = "success"
+                mail = booking_cancelled_mail(
+                    booking_no=booking_no,
+                    building_name=building.building_name,
+                    room_title=room.title,
+                    owner=True
+                )
+                EmailThread(email_to=seeker.user.username, subject="Booking Cancelled", body=mail).start()
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context['detail'] = "invalid user"
@@ -343,6 +361,13 @@ class DeleteBooking(APIView):
                     room.available += 1
                     room.save()
                 context['detail'] = "success"
+                mail = booking_cancelled_mail(
+                    booking_no=booking_no,
+                    building_name=building.building_name,
+                    room_title=room.title,
+                    owner=False
+                )
+                EmailThread(email_to=owner.user.username, subject="Booking Cancelled", body=mail).start()
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context['detail'] = "Invalid User"
