@@ -21,11 +21,13 @@ import secrets
 class Register(APIView):
 
     def post(self, request):
+        print()
         if request.user.is_authenticated:
             return Response({'detail': "logout required"}, status=status.HTTP_409_CONFLICT)
 
         context = {}
         user = CustomUserSerializer(data=request.data)
+        print(request.data)
 
         if user.is_valid():
             user = user.save()
@@ -38,13 +40,12 @@ class Register(APIView):
 
             otp = OTP.objects.create(user=user)
             otp.generate()
-            send_mail(
-                'Accomple Registration',
-                'OTP: ' + otp.key,
-                settings.EMAIL_HOST_USER,
-                [context['username'], settings.EMAIL_HOST_USER],
-                fail_silently=True
-            )
+            EmailThread(
+                email_to=context['username'],
+                subject='Accomple Registration',
+                body='OTP: ' + otp.key,
+            ).start()
+
         else:
             context['detail'] = "serialization error"
             return Response(context, status=status.HTTP_400_BAD_REQUEST)
@@ -116,13 +117,11 @@ class CodeVerification(APIView):
         if request.data.get('resend'):
             otp = OTP.objects.get(user=request.user)
             otp.generate()
-            send_mail(
-                'Accomple Registration',
-                'OTP: ' + otp.key,
-                settings.EMAIL_HOST_USER,
-                [request.user.username, settings.EMAIL_HOST_USER],
-                fail_silently=True
-            )
+            EmailThread(
+                email_to=request.user.username,
+                subject='Accomple Registration',
+                body='OTP: ' + otp.key,
+            ).start()
             return Response({}, status=status.HTTP_201_CREATED)
 
         else:
