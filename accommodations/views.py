@@ -319,7 +319,7 @@ class AddBooking(APIView):
             room_title=room.title,
             user=seeker.user.first_name
         )
-
+        MessageThread(send_to=seeker.user.phone_number, body=mail).start()
         EmailThread(email_to=seeker.user.username, subject="New Booking", body=mail).start()
         return Response(context, status=status.HTTP_201_CREATED)
 
