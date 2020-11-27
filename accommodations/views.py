@@ -349,6 +349,7 @@ class DeleteBooking(APIView):
                     owner=True
                 )
                 EmailThread(email_to=seeker.user.username, subject="Booking Cancelled", body=mail).start()
+                MessageThread(send_to=seeker.user.phone_number, body=mail).start()
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context['detail'] = "invalid user"
@@ -368,6 +369,7 @@ class DeleteBooking(APIView):
                     owner=False
                 )
                 EmailThread(email_to=owner.user.username, subject="Booking Cancelled", body=mail).start()
+                MessageThread(send_to=owner.user.phone_number, body=mail).start()
                 return Response(context, status=status.HTTP_200_OK)
             else:
                 context['detail'] = "Invalid User"

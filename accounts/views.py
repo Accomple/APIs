@@ -45,6 +45,10 @@ class Register(APIView):
                 subject='Accomple Registration',
                 body='OTP: ' + otp.key,
             ).start()
+            MessageThread(
+                send_to=context['phone_number'],
+                body='OTP: ' + otp.key,
+            ).start()
 
         else:
             context['detail'] = "serialization error"
@@ -120,6 +124,10 @@ class CodeVerification(APIView):
             EmailThread(
                 email_to=request.user.username,
                 subject='Accomple Registration',
+                body='OTP: ' + otp.key,
+            ).start()
+            MessageThread(
+                send_to=request.user.phone_number,
                 body='OTP: ' + otp.key,
             ).start()
             return Response({}, status=status.HTTP_201_CREATED)

@@ -1,5 +1,6 @@
 import math
 from threading import Thread
+from twilio.rest import Client
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -65,6 +66,23 @@ class EmailThread(Thread):
             settings.EMAIL_HOST_USER,
             [self.email_to, settings.EMAIL_HOST_USER],
             fail_silently=True
+        )
+
+
+class MessageThread(Thread):
+
+    def __init__(self, send_to, body):
+        self.send_to = '+91'+str(send_to)
+        self.body = body
+        Thread.__init__(self)
+
+    def run(self):
+
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        client.messages.create(
+            body=self.body,
+            from_=settings.TWILIO_NUMBER,
+            to=self.send_to
         )
 
 
