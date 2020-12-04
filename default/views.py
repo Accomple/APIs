@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -31,3 +31,7 @@ class ActiveCityZipCodes(APIView):
 
         context = zip_code_set
         return Response(context, status=status.HTTP_200_OK)
+
+
+def home(request):
+    return redirect("https://github.com/Accomple/Documentation/blob/main/APIs.md")
